@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as faceapi from 'face-api.js';
-import { Upload, Camera, RefreshCw } from 'lucide-react';
+import { Upload, Camera, RefreshCw, Shield } from 'lucide-react';
 
 function App() {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -170,107 +170,157 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-6">Face Recognition System</h1>
-          
-          <div className="flex gap-4 mb-6">
-            <label className="inline-flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg cursor-pointer hover:bg-blue-600 transition-colors">
-              <Upload className="mr-2" />
-              Upload Reference Image
-              <input
-                ref={fileInputRef}
-                type="file"
-                className="hidden"
-                accept="image/*"
-                onChange={handleImageUpload}
+    <div className="h-screen w-screen bg-gradient-to-br from-indigo-100 to-blue-100 p-2 flex items-center justify-center overflow-hidden">
+      <div className="w-full h-full max-w-6xl max-h-screen flex flex-col">
+        {/* Header - More compact */}
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2 rounded-t-lg flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <Shield className="text-white h-5 w-5" />
+            <h1 className="text-xl font-bold text-white">FaceGuard</h1>
+          </div>
+          <p className="text-blue-100 text-sm">Advanced Face Recognition</p>
+        </div>
+
+        {/* Main content area */}
+        <div className="flex-1 bg-white p-3 flex gap-3 overflow-hidden">
+          {/* Left side - Video feed */}
+          <div className="w-3/5 flex flex-col gap-2">
+            <div className="flex-1 bg-gray-900 rounded-lg overflow-hidden relative">
+              <video
+                ref={videoRef}
+                autoPlay
+                muted
+                onPlay={handleVideoPlay}
+                className="w-full h-full object-cover"
               />
-            </label>
+              <canvas
+                ref={canvasRef}
+                className="absolute top-0 left-0 w-full h-full"
+              />
+              
+              {/* Video controls overlay */}
+              <div className="absolute bottom-2 left-0 right-0 flex justify-center">
+                <button
+                  onClick={captureImage}
+                  disabled={isProcessing || !modelsLoaded}
+                  className="bg-white bg-opacity-20 backdrop-blur-md hover:bg-opacity-30 text-white rounded-full p-2 transition-all duration-200 shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Camera className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
 
-            <button
-              onClick={captureImage}
-              disabled={isProcessing}
-              className="inline-flex items-center px-4 py-2 bg-green-500 text-white rounded-lg cursor-pointer hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Camera className="mr-2" />
-              Capture Current Frame
-            </button>
-
-            {(referenceImage && capturedImage) && (
-              <button
-                onClick={performFaceMatch}
-                disabled={isProcessing || !referenceDescriptor || !capturedDescriptor}
-                className="inline-flex items-center px-4 py-2 bg-purple-500 text-white rounded-lg cursor-pointer hover:bg-purple-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Compare Faces
-              </button>
-            )}
-
-            {(referenceImage || capturedImage) && (
-              <button
-                onClick={resetCapture}
-                className="inline-flex items-center px-4 py-2 bg-red-500 text-white rounded-lg cursor-pointer hover:bg-red-600 transition-colors"
-              >
-                <RefreshCw className="mr-2" />
-                Reset
-              </button>
-            )}
-          </div>
-
-          <div className="grid grid-cols-2 gap-6 mb-6">
-            {referenceImage && (
-              <div>
-                <h2 className="text-xl font-semibold mb-2">Reference Image:</h2>
-                <img
-                  src={referenceImage}
-                  alt="Reference"
-                  className="w-full rounded-lg border border-gray-200"
+            {/* Action buttons - Horizontal for space efficiency */}
+            <div className="flex gap-2">
+              <label className="flex-1">
+                <div className="flex items-center justify-center gap-1 px-2 py-1 bg-indigo-600 text-white rounded-md cursor-pointer hover:bg-indigo-700 transition-colors shadow-sm text-sm">
+                  <Upload className="h-4 w-4" />
+                  <span>Upload Reference</span>
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  className="hidden"
+                  accept="image/*"
+                  onChange={handleImageUpload}
                 />
+              </label>
+
+              {(referenceImage && capturedImage) && (
+                <button
+                  onClick={performFaceMatch}
+                  disabled={isProcessing || !referenceDescriptor || !capturedDescriptor}
+                  className="flex-1 flex items-center justify-center gap-1 px-2 py-1 bg-emerald-600 text-white rounded-md cursor-pointer hover:bg-emerald-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                >
+                  <Shield className="h-4 w-4" />
+                  <span>Compare</span>
+                </button>
+              )}
+
+              {(referenceImage || capturedImage) && (
+                <button
+                  onClick={resetCapture}
+                  className="flex items-center justify-center gap-1 px-2 py-1 bg-gray-600 text-white rounded-md cursor-pointer hover:bg-gray-700 transition-colors shadow-sm text-sm"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                  <span>Reset</span>
+                </button>
+              )}
+            </div>
+
+            {/* Match result - Compact display */}
+            {matchResult && (
+              <div className={`p-2 rounded-md text-sm ${
+                matchResult.includes('✅') ? 'bg-green-50 border border-green-200 text-green-800' : 'bg-red-50 border border-red-200 text-red-800'
+              }`}>
+                <pre className="font-semibold whitespace-pre-line">{matchResult}</pre>
               </div>
             )}
 
-            {capturedImage && (
-              <div>
-                <h2 className="text-xl font-semibold mb-2">Captured Image:</h2>
-                <img
-                  src={capturedImage}
-                  alt="Captured"
-                  className="w-full rounded-lg border border-gray-200"
-                />
+            {/* Loading indicator */}
+            {!modelsLoaded && (
+              <div className="p-2 bg-blue-50 border border-blue-200 text-blue-800 rounded-md flex items-center text-sm">
+                <div className="animate-spin mr-2 h-3 w-3 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                <p>Loading face recognition models...</p>
               </div>
             )}
           </div>
 
-          <div className="relative">
-            <video
-              ref={videoRef}
-              autoPlay
-              muted
-              onPlay={handleVideoPlay}
-              className="rounded-lg shadow-md"
-              style={{ width: '100%', maxWidth: '720px' }}
-            />
-            <canvas
-              ref={canvasRef}
-              className="absolute top-0 left-0 rounded-lg"
-              style={{ width: '100%', maxWidth: '720px' }}
-            />
+          {/* Right side - Image previews */}
+          <div className="w-2/5 flex flex-col gap-2 h-full">
+            {/* Reference image container */}
+            <div className={`flex-1 bg-white rounded-md overflow-hidden border ${referenceImage ? 'border-indigo-200' : 'border-dashed border-gray-300'} p-2 transition-all duration-300`}>
+              <h2 className="text-sm font-semibold text-gray-700 mb-1 flex items-center">
+                <div className="bg-indigo-100 p-1 rounded-md mr-1">
+                  <Upload className="h-3 w-3 text-indigo-600" />
+                </div>
+                Reference Image
+              </h2>
+              
+              {referenceImage ? (
+                <div className="rounded-md overflow-hidden bg-gray-100 h-full">
+                  <img
+                    src={referenceImage}
+                    alt="Reference"
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+              ) : (
+                <div className="h-full rounded-md bg-gray-50 flex items-center justify-center text-gray-400 border border-dashed border-gray-200 text-sm">
+                  <p>No reference image</p>
+                </div>
+              )}
+            </div>
+
+            {/* Captured image container */}
+            <div className={`flex-1 bg-white rounded-md overflow-hidden border ${capturedImage ? 'border-emerald-200' : 'border-dashed border-gray-300'} p-2 transition-all duration-300`}>
+              <h2 className="text-sm font-semibold text-gray-700 mb-1 flex items-center">
+                <div className="bg-emerald-100 p-1 rounded-md mr-1">
+                  <Camera className="h-3 w-3 text-emerald-600" />
+                </div>
+                Captured Image
+              </h2>
+              
+              {capturedImage ? (
+                <div className="rounded-md overflow-hidden bg-gray-100 h-full">
+                  <img
+                    src={capturedImage}
+                    alt="Captured"
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+              ) : (
+                <div className="h-full rounded-md bg-gray-50 flex items-center justify-center text-gray-400 border border-dashed border-gray-200 text-sm">
+                  <p>No image captured</p>
+                </div>
+              )}
+            </div>
           </div>
-
-          {matchResult && (
-            <div className={`mt-4 p-4 rounded-lg ${
-              matchResult.includes('✅') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-            }`}>
-              <pre className="text-lg font-semibold whitespace-pre-line">{matchResult}</pre>
-            </div>
-          )}
-
-          {!modelsLoaded && (
-            <div className="mt-4 p-4 bg-yellow-100 text-yellow-800 rounded-lg">
-              <p>Loading face recognition models...</p>
-            </div>
-          )}
+        </div>
+        
+        {/* Footer */}
+        <div className="bg-gray-50 py-1 px-4 text-center text-gray-500 text-xs rounded-b-lg">
+          <p>Secure Face Recognition System • Powered by face-api.js</p>
         </div>
       </div>
     </div>
